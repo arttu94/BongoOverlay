@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+.vs/
+/Include
+/x64
+/Lib
+*.vcxproj
+*.vcxproj.*
