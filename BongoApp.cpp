@@ -211,14 +211,22 @@ void BongoApp::Update(float dt)
 	state = glfwGetKey(window, GLFW_KEY_2);
 	if (state == GLFW_PRESS)
 	{
-		this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ducks.png", GL_TRUE));
-		BongoApp::tapObject = TapObject::ducks;
+		if (BongoApp::tapObject != TapObject::ducks)
+		{
+			this->tapObjTex.reset();
+			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ducks.png", GL_TRUE));
+			BongoApp::tapObject = TapObject::ducks;
+		}
 	}
 	state = glfwGetKey(window, GLFW_KEY_3);
 	if (state == GLFW_PRESS)
 	{
-		this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kb.png", GL_TRUE));
-		BongoApp::tapObject = TapObject::keyboard;
+		if (BongoApp::tapObject != TapObject::keyboard)
+		{
+			this->tapObjTex.reset();
+			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kb.png", GL_TRUE));
+			BongoApp::tapObject = TapObject::keyboard;
+		}
 	}
 }
 
