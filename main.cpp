@@ -1,5 +1,6 @@
-#include <iostream>
 #include <Windows.h>
+#include <iostream>
+#include <conio.h>
 #include <time.h>
 #include "BongoApp.h"
 
@@ -20,10 +21,19 @@ LRESULT CALLBACK LowLevelKeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 		case WM_KEYDOWN:
-			if(0 == (rand() % 2))
+			if (0 == (rand() % 2))
+			{
+				//only play the sound of the paw goes from a u-d action and not a d-d
+				if(app->r_arm == app->r_arm_u && !BongoApp::isMuted && BongoApp::tapObject == TapObject::ducks)
+					PlaySound(TEXT("Resources/quack.wav"), NULL, SND_ASYNC);
 				app->r_arm = app->r_arm_d;
+			}
 			else
+			{
+				if (app->l_arm == app->l_arm_u && !BongoApp::isMuted && BongoApp::tapObject == TapObject::ducks)
+					PlaySound(TEXT("Resources/quack.wav"), NULL, SND_ASYNC);
 				app->l_arm = app->l_arm_d;
+			}
 			break;
 		case WM_KEYUP:
 			if (0 == (rand() % 2))
@@ -41,14 +51,19 @@ LRESULT CALLBACK LowLevelKeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 		cout << char(p->vkCode) << endl;
 		*/
 	}
-	return CallNextHookEx(0, code, wParam, lParam);
+	return CallNextHookEx(k_Hook, code, wParam, lParam);
 }
 
 int main(int argc, char** argv) 
 {
 	std::cout << "\nWith the program in the foreground use the L key to lock/unlock the window" << std::endl;
 	std::cout << "locking will hide title bar and shadows and make it topmost (local overlay)" << std::endl;
-	std::cout << "Exit the program with ESC or using the X button in the title bar \n" << std::endl;
+	std::cout << "Exit the program with ESC or using the X button in the title bar" << std::endl;
+
+	std::cout << "\nUse keys 1 ... 3 to change the object that will be tapped" << std::endl;
+	std::cout << "if the object has a sound you can mute/unmute it with the M key\n" << std::endl;
+
+	//FreeConsole();
 
 	app = std::make_unique<BongoApp>();
 
@@ -64,6 +79,8 @@ int main(int argc, char** argv)
 	app->Init();
 	app->LoadResources();
 	app->SetInput();
+
+	BongoApp::isMuted = false;
 
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastFrame = 0.0f;
@@ -81,8 +98,8 @@ int main(int argc, char** argv)
 
 		// Render stuff
 
-		//if it's topmost clear for a transparent background (has to be black with 0.0f alpha value) 
-		//else use a green background (eg OBS chroma key) 
+		// if it's topmost clear for a transparent background (has to be black with 0.0f alpha value) 
+		// else use a green background (eg OBS chroma key) 
 		if (glfwGetWindowAttrib(app->GetGLFWWindow(), GLFW_FLOATING))
 			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		else

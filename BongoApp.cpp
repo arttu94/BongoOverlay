@@ -15,7 +15,14 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <glfw3native.h>
 
-BongoApp::BongoApp() : window(nullptr), shader(nullptr), bodyTex(nullptr), r_arm_u(nullptr), r_arm_d(nullptr), r_arm(nullptr), l_arm_u(nullptr), l_arm_d(nullptr), l_arm(nullptr)
+bool BongoApp::isMuted = false;	
+TapObject BongoApp::tapObject = TapObject::none;
+
+BongoApp::BongoApp() : 
+	window(nullptr), shader(nullptr), 
+	bodyTex(nullptr), tapObjTex(nullptr),
+	r_arm_u(nullptr), r_arm_d(nullptr), r_arm(nullptr), 
+	l_arm_u(nullptr), l_arm_d(nullptr), l_arm(nullptr)
 {
 
 }
@@ -57,6 +64,23 @@ void BongoApp::KeyCallback(GLFWwindow* window, int key, int scancode, int action
 			glfwSetWindowAttrib(window, GLFW_DECORATED, GLFW_TRUE);
 			glfwSetWindowAttrib(window, GLFW_FLOATING, GLFW_FALSE);
 		}
+	}
+	else if (key == GLFW_KEY_M && action == GLFW_PRESS)
+	{
+		// mute
+		BongoApp::isMuted = !BongoApp::isMuted;
+	}
+	else if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+	{
+		//none
+	}
+	else if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+	{
+		//keyboard
+	}
+	else if (key == GLFW_KEY_3 && action == GLFW_PRESS)
+	{
+		//ducks
 	}
 }
 
@@ -130,10 +154,7 @@ void BongoApp::LoadResources()
 {
 	this->shader = std::make_shared<Shader>("Resources/Shader/sprite.vert", "Resources/Shader/sprite.frag");
 
-	this->bodyTex = std::make_shared<Texture>(*Texture::loadTextureFromFile("Resources/body.png", GL_TRUE));
-	//this->r_arm_u = std::make_shared<Texture>(Texture::loadTextureFromFile("Resources/r_arm_u.png", GL_TRUE));
-	//this->r_arm_d = std::make_shared<Texture>(Texture::loadTextureFromFile("Resources/r_arm_d.png", GL_TRUE));
-	//this->r_arm = this->r_arm_u;
+	this->bodyTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/body.png", GL_TRUE));
 
 	this->r_arm_d = Texture::loadTextureFromFile("Resources/r_arm_d.png", GL_TRUE);
 	this->r_arm_u = Texture::loadTextureFromFile("Resources/r_arm_u.png", GL_TRUE);
@@ -171,6 +192,8 @@ void BongoApp::Render()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	this->spriteRenderer->DrawSprite(*this->bodyTex, glm::vec2(0, 0), glm::vec2(300, 300)); 
+	if(BongoApp::tapObject != TapObject::none)
+		this->spriteRenderer->DrawSprite(*this->tapObjTex, glm::vec2(0, 0), glm::vec2(300, 300));
 	this->spriteRenderer->DrawSprite(*this->l_arm, glm::vec2(0, 0), glm::vec2(300, 300));
 	this->spriteRenderer->DrawSprite(*this->r_arm, glm::vec2(0, 0), glm::vec2(300, 300));
 	//draw transparent objects above this comment
@@ -180,7 +203,23 @@ void BongoApp::Render()
 
 void BongoApp::Update(float dt)
 {
-
+	int state = glfwGetKey(window, GLFW_KEY_1);
+	if (state == GLFW_PRESS)
+	{
+		BongoApp::tapObject = TapObject::none;
+	}
+	state = glfwGetKey(window, GLFW_KEY_2);
+	if (state == GLFW_PRESS)
+	{
+		this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ducks.png", GL_TRUE));
+		BongoApp::tapObject = TapObject::ducks;
+	}
+	state = glfwGetKey(window, GLFW_KEY_3);
+	if (state == GLFW_PRESS)
+	{
+		this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kb.png", GL_TRUE));
+		BongoApp::tapObject = TapObject::keyboard;
+	}
 }
 
 void BongoApp::Close()

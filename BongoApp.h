@@ -7,6 +7,15 @@ class Shader;
 class SpriteRenderer;
 class Texture;
 
+enum TapObject
+{
+	none = 0,
+	ducks,
+	keyboard,
+	bongoes,
+	synth
+};
+
 class BongoApp
 {
 public:
@@ -40,12 +49,16 @@ public:
 	Texture* l_arm_u;
 	Texture* l_arm;
 
+	static bool isMuted;
+	static TapObject tapObject;
+
 private:
 	GLFWwindow* window;
 
 	std::shared_ptr<Shader> shader;
 
-	std::shared_ptr<Texture> bodyTex;
+	std::unique_ptr<Texture> bodyTex;
+	std::unique_ptr<Texture> tapObjTex;
 
 	std::unique_ptr<SpriteRenderer> spriteRenderer;
 };
