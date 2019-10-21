@@ -1,12 +1,12 @@
 #include "SpriteRenderer.h"
 #include "Shader.h"
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include "Texture.h"
 #include <iostream>
 
-#include <glew.h>
+#include <GL/glew.h>
 #define GLFW_DLL
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 
 SpriteRenderer::SpriteRenderer(std::shared_ptr<Shader> shader)
 {

@@ -7,13 +7,13 @@
 #include "Texture.h"
 #include "Shader.h"
 
-#include <glew.h>
+#include <GL/glew.h>
 #define GLFW_DLL
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 #include <stdio.h>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
-#include <glfw3native.h>
+#include <GLFW/glfw3native.h>
 
 bool BongoApp::isMuted = false;	
 TapObject BongoApp::tapObject = TapObject::none;

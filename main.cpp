@@ -4,9 +4,9 @@
 #include <time.h>
 #include "BongoApp.h"
 
-#include <glew.h>
+#include <Gl/glew.h>
 #define GLFW_DLL
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 
 HHOOK k_Hook;
 
@@ -87,11 +87,13 @@ int main(int argc, char** argv)
 
 	while (!glfwWindowShouldClose(app->GetGLFWWindow()))
 	{
+		//glfwPollEvents();
+		glfwWaitEvents();
+
 		// Calculate delta time
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		glfwPollEvents();
 
 		// Update Game state
 		app->Update(deltaTime);

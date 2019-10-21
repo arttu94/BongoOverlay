@@ -1,9 +1,9 @@
 #pragma once
 
 #include <string>
-#include <glm.hpp>
-#include <glew.h>
-#include <gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <GL/glew.h>
+#include <glm/gtc/type_ptr.hpp>
 
 class Shader
 {
