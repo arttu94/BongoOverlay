@@ -218,6 +218,9 @@ void BongoApp::Update(float dt)
 			BongoApp::tapObject = TapObject::ducks;
 		}
 	}
+	// there seems to be a crash/hang when chaging from the ducks but it's rare and 
+	// difficult to replicate, as much as I've spammed it I haven't been able to replicate it
+	// but it has always been changing from the ducks to blank/keyboard
 	state = glfwGetKey(window, GLFW_KEY_3);
 	if (state == GLFW_PRESS)
 	{
@@ -226,6 +229,16 @@ void BongoApp::Update(float dt)
 			this->tapObjTex.reset();
 			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kb.png", GL_TRUE));
 			BongoApp::tapObject = TapObject::keyboard;
+		}
+	}
+	state = glfwGetKey(window, GLFW_KEY_4);
+	if (state == GLFW_PRESS)
+	{
+		if (BongoApp::tapObject != TapObject::synth)
+		{
+			this->tapObjTex.reset();
+			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/synth.png", GL_TRUE));
+			BongoApp::tapObject = TapObject::synth;
 		}
 	}
 }
