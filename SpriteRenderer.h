@@ -13,12 +13,13 @@ public:
 	//SpriteRenderer(Shader& shader);
 	~SpriteRenderer();
 
-	void DrawSprite(Texture& texture, glm::vec2 position, glm::vec2 size = glm::vec2(10.f, 10.f), float rotate = 0.f, glm::vec3 color = glm::vec3(1.f));
+	void DrawSprite(Texture& texture, glm::vec2 position, glm::vec2 size = glm::vec2(10.f, 10.f), GLfloat rotate = 0.f, glm::vec3 color = glm::vec3(1.f));
 
+	GLuint VBO;
 private:
 	std::shared_ptr<Shader> shader;
 	//Shader shader;
-	unsigned int quadVAO;
+	GLuint quadVAO;
 
 	void InitRenderData();
 };

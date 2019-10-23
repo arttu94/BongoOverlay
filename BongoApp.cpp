@@ -16,12 +16,12 @@
 #include <GLFW/glfw3native.h>
 
 bool BongoApp::isMuted = false;	
-TapObject BongoApp::tapObject = TapObject::none;
+TapObject BongoApp::tapObject = (TapObject)0;
 
 BongoApp::BongoApp() : 
-	window(nullptr), shader(nullptr), 
+	window(nullptr), shader(nullptr), lastUsedLimb((Limb)0), mousePos(glm::vec2(0.f)),
 	bodyTex(nullptr), tapObjTex(nullptr),
-	r_arm_u(nullptr), r_arm_d(nullptr), r_arm(nullptr), 
+	r_arm_u(nullptr), r_arm_d(nullptr), r_arm(nullptr), r_arm_mouse(nullptr),
 	l_arm_u(nullptr), l_arm_d(nullptr), l_arm(nullptr)
 {
 
@@ -33,6 +33,9 @@ BongoApp::~BongoApp()
 
 	this->r_arm = nullptr;
 	this->l_arm = nullptr;
+
+	if (r_arm_mouse)
+		delete r_arm_mouse;
 
 	if (r_arm_u)
 		delete r_arm_u;
@@ -156,6 +159,8 @@ void BongoApp::LoadResources()
 
 	this->bodyTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/body.png", GL_TRUE));
 
+	this->mouseTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/mouse.png", GL_TRUE));
+
 	this->r_arm_d = Texture::loadTextureFromFile("Resources/r_arm_d.png", GL_TRUE);
 	this->r_arm_u = Texture::loadTextureFromFile("Resources/r_arm_u.png", GL_TRUE);
 	this->r_arm = r_arm_u;
@@ -164,6 +169,8 @@ void BongoApp::LoadResources()
 	this->l_arm_u = Texture::loadTextureFromFile("Resources/l_arm_u.png", GL_TRUE);
 	this->l_arm = l_arm_u;
 
+	this->r_arm_mouse = Texture::loadTextureFromFile("Resources/r_arm_mouse.png", GL_TRUE);
+
 	glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(300),
 		static_cast<GLfloat>(300), 0.0f, -10.0f, 10.0f);
 
@@ -171,6 +178,7 @@ void BongoApp::LoadResources()
 	this->shader->Use()->SetMatrix4("projection", projection);
 
 	this->spriteRenderer = std::make_unique<SpriteRenderer>(this->shader);
+	this->dynamicSpriteRenderer = std::make_unique<SpriteRenderer>(this->shader);
 }
 
 bool BongoApp::MakeGLWindowTransparent(COLORREF colorKey)
@@ -192,10 +200,20 @@ void BongoApp::Render()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	this->spriteRenderer->DrawSprite(*this->bodyTex, glm::vec2(0, 0), glm::vec2(300, 300)); 
+
 	if(BongoApp::tapObject != TapObject::none)
 		this->spriteRenderer->DrawSprite(*this->tapObjTex, glm::vec2(0, 0), glm::vec2(300, 300));
+
+	if(this->tapObject == TapObject::kbNms)
+		this->spriteRenderer->DrawSprite(*this->mouseTex, glm::vec2(0 + this->mousePos.x, 170 + this->mousePos.y), glm::vec2(80, 80));
+	
+	if(this->tapObject == TapObject::kbNms)
+		this->dynamicSpriteRenderer->DrawSprite(*this->r_arm_mouse, glm::vec2(3, 100), glm::vec2(125, 125), (42.25 * (3.14f / 180)));
+	else
+		this->spriteRenderer->DrawSprite(*this->r_arm, glm::vec2(0, 0), glm::vec2(300, 300));
+
 	this->spriteRenderer->DrawSprite(*this->l_arm, glm::vec2(0, 0), glm::vec2(300, 300));
-	this->spriteRenderer->DrawSprite(*this->r_arm, glm::vec2(0, 0), glm::vec2(300, 300));
+	
 	//draw transparent objects above this comment
 	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);
@@ -241,6 +259,37 @@ void BongoApp::Update(float dt)
 			BongoApp::tapObject = TapObject::synth;
 		}
 	}
+	state = glfwGetKey(window, GLFW_KEY_5);
+	if (state == GLFW_PRESS)
+	{
+		if (BongoApp::tapObject != TapObject::ak)
+		{
+			this->tapObjTex.reset();
+			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ak.png", GL_TRUE));
+			BongoApp::tapObject = TapObject::ak;
+		}
+	}
+	state = glfwGetKey(window, GLFW_KEY_5);
+	if (state == GLFW_PRESS)
+	{
+		if (BongoApp::tapObject != TapObject::ak)
+		{
+			this->tapObjTex.reset();
+			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ak.png", GL_TRUE));
+			BongoApp::tapObject = TapObject::ak;
+		}
+	}
+	state = glfwGetKey(window, GLFW_KEY_6);
+	if (state == GLFW_PRESS)
+	{
+		if (BongoApp::tapObject != TapObject::kbNms)
+		{
+			this->tapObjTex.reset();
+			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kbnpad.png", GL_TRUE));
+			BongoApp::tapObject = TapObject::kbNms;
+		}
+	}
+	// TODO: change to mouse + keyboard 
 }
 
 void BongoApp::Close()

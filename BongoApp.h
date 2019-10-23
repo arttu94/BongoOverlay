@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <memory>
+#include <glm/glm.hpp>
 
 struct GLFWwindow;
 class Shader;
@@ -13,7 +14,16 @@ enum TapObject
 	ducks,
 	keyboard,
 	bongoes,
-	synth
+	synth,
+	ak,
+	kbNms
+};
+
+enum Limb
+{
+	na = 0,
+	right,
+	left
 };
 
 class BongoApp
@@ -49,8 +59,15 @@ public:
 	Texture* l_arm_u;
 	Texture* l_arm;
 
+	Texture* r_arm_mouse;
+
+	Limb lastUsedLimb;
+
+	glm::vec2 mousePos;
+
 	static bool isMuted;
 	static TapObject tapObject;
+	std::unique_ptr<SpriteRenderer> dynamicSpriteRenderer;
 
 private:
 	GLFWwindow* window;
@@ -59,6 +76,7 @@ private:
 
 	std::unique_ptr<Texture> bodyTex;
 	std::unique_ptr<Texture> tapObjTex;
+	std::unique_ptr<Texture> mouseTex;
 
 	std::unique_ptr<SpriteRenderer> spriteRenderer;
 };
