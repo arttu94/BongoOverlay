@@ -35,6 +35,8 @@ public:
 
 	static void KeyCallback(GLFWwindow*, int, int, int, int);
 
+	void SetMousePos(float x, float y);
+
 	void SetInput();
 
 	bool Init();
@@ -42,6 +44,8 @@ public:
 	void LoadResources();
 
 	bool MakeGLWindowTransparent(COLORREF colorKey);
+
+	void ChangeTapObject(const char* resource, TapObject objectType);
 
 	void Update(float dt);
 
@@ -63,14 +67,17 @@ public:
 
 	Limb lastUsedLimb;
 
-	glm::vec2 mousePos;
-
 	static bool isMuted;
 	static TapObject tapObject;
 	std::unique_ptr<SpriteRenderer> dynamicSpriteRenderer;
 
+	bool (*HookCallback)();
+	void (*UnhookCallback)();
+
 private:
 	GLFWwindow* window;
+
+	glm::vec2 mousePos;
 
 	std::shared_ptr<Shader> shader;
 

@@ -87,6 +87,12 @@ void BongoApp::KeyCallback(GLFWwindow* window, int key, int scancode, int action
 	}
 }
 
+void BongoApp::SetMousePos(float x, float y)
+{
+	this->mousePos.x = x;
+	this->mousePos.y = y;
+}
+
 void BongoApp::SetInput()
 {
 	glfwSetKeyCallback(this->window, BongoApp::KeyCallback);
@@ -194,6 +200,31 @@ bool BongoApp::MakeGLWindowTransparent(COLORREF colorKey)
 
 void BongoApp::Render()
 {
+	// TODO: find the sweet spot with the offset
+	// TODO: do the arm thing in a less expensive way
+	if (this->tapObject == TapObject::kbNms)
+	{
+		GLfloat vertices[] = {
+			// Pos      // Tex
+			0.0f + (this->mousePos.x * .00015), 1.1f + (this->mousePos.y * .00015), 0.0f, 1.0f,
+			1.0f                              , 0.0f                              , 1.0f, 0.0f,
+			0.0f                              , 0.0f                              , 0.0f, 0.0f,
+							              			                
+			0.0f + (this->mousePos.x * .00012), 1.0f + (this->mousePos.y * .00012), 0.0f, 1.0f,
+			1.0f + (this->mousePos.x * .00012), 1.0f + (this->mousePos.y * .00012), 1.0f, 1.0f,
+			1.0f                              , 0.0f                              , 1.0f, 0.0f
+		};
+
+		if (this->dynamicSpriteRenderer != nullptr)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicSpriteRenderer->VBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		}
+
+		// (https://stackoverflow.com/questions/34125298/modify-single-vertex-position-in-opengl) for reference
+	}
+
+
 	//if there are any opaque sprites draw them above this comment
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
@@ -205,7 +236,7 @@ void BongoApp::Render()
 		this->spriteRenderer->DrawSprite(*this->tapObjTex, glm::vec2(0, 0), glm::vec2(300, 300));
 
 	if(this->tapObject == TapObject::kbNms)
-		this->spriteRenderer->DrawSprite(*this->mouseTex, glm::vec2(0 + this->mousePos.x, 170 + this->mousePos.y), glm::vec2(80, 80));
+		this->spriteRenderer->DrawSprite(*this->mouseTex, glm::vec2(0 + (this->mousePos.x * 0.014f), 170 + (this->mousePos.y * 0.014f)), glm::vec2(80, 80));
 	
 	if(this->tapObject == TapObject::kbNms)
 		this->dynamicSpriteRenderer->DrawSprite(*this->r_arm_mouse, glm::vec2(3, 100), glm::vec2(125, 125), (42.25 * (3.14f / 180)));
@@ -219,75 +250,54 @@ void BongoApp::Render()
 	glDepthMask(GL_TRUE);
 }
 
+void BongoApp::ChangeTapObject(const char* resource, TapObject objectType)
+{
+	if (BongoApp::tapObject != objectType)
+	{
+		this->tapObjTex.reset();
+		this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile(resource, GL_TRUE));
+		BongoApp::tapObject = objectType;
+	}
+}
+
 void BongoApp::Update(float dt)
 {
 	int state = glfwGetKey(window, GLFW_KEY_1);
 	if (state == GLFW_PRESS)
 	{
+		this->tapObjTex.reset();
 		BongoApp::tapObject = TapObject::none;
+		//this->UnhookCallback();
 	}
 	state = glfwGetKey(window, GLFW_KEY_2);
 	if (state == GLFW_PRESS)
 	{
-		if (BongoApp::tapObject != TapObject::ducks)
-		{
-			this->tapObjTex.reset();
-			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ducks.png", GL_TRUE));
-			BongoApp::tapObject = TapObject::ducks;
-		}
+		ChangeTapObject("Resources/ducks.png", TapObject::ducks);
+		this->UnhookCallback();
 	}
-	// there seems to be a crash/hang when chaging from the ducks but it's rare and 
-	// difficult to replicate, as much as I've spammed it I haven't been able to replicate it
-	// but it has always been changing from the ducks to blank/keyboard
 	state = glfwGetKey(window, GLFW_KEY_3);
 	if (state == GLFW_PRESS)
 	{
-		if (BongoApp::tapObject != TapObject::keyboard)
-		{
-			this->tapObjTex.reset();
-			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kb.png", GL_TRUE));
-			BongoApp::tapObject = TapObject::keyboard;
-		}
+		ChangeTapObject("Resources/kb.png", TapObject::keyboard);
+		this->UnhookCallback();
 	}
 	state = glfwGetKey(window, GLFW_KEY_4);
 	if (state == GLFW_PRESS)
 	{
-		if (BongoApp::tapObject != TapObject::synth)
-		{
-			this->tapObjTex.reset();
-			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/synth.png", GL_TRUE));
-			BongoApp::tapObject = TapObject::synth;
-		}
+		ChangeTapObject("Resources/synth.png", TapObject::synth);
+		this->UnhookCallback();
 	}
 	state = glfwGetKey(window, GLFW_KEY_5);
 	if (state == GLFW_PRESS)
 	{
-		if (BongoApp::tapObject != TapObject::ak)
-		{
-			this->tapObjTex.reset();
-			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ak.png", GL_TRUE));
-			BongoApp::tapObject = TapObject::ak;
-		}
-	}
-	state = glfwGetKey(window, GLFW_KEY_5);
-	if (state == GLFW_PRESS)
-	{
-		if (BongoApp::tapObject != TapObject::ak)
-		{
-			this->tapObjTex.reset();
-			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/ak.png", GL_TRUE));
-			BongoApp::tapObject = TapObject::ak;
-		}
+		ChangeTapObject("Resources/ak.png", TapObject::ak);
+		this->UnhookCallback();
 	}
 	state = glfwGetKey(window, GLFW_KEY_6);
 	if (state == GLFW_PRESS)
 	{
-		if (BongoApp::tapObject != TapObject::kbNms)
-		{
-			this->tapObjTex.reset();
-			this->tapObjTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/kbnpad.png", GL_TRUE));
-			BongoApp::tapObject = TapObject::kbNms;
-		}
+		ChangeTapObject("Resources/kbnpad.png", TapObject::kbNms);
+		this->HookCallback();
 	}
 	// TODO: change to mouse + keyboard 
 }

@@ -13,6 +13,7 @@
 #include <Gl/glew.h>
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
+#include "main.h"
 
 HHOOK k_Hook;
 HHOOK m_Hook;
@@ -29,40 +30,17 @@ LRESULT CALLBACK LowLevelMouseProc(int code, WPARAM wParam, LPARAM lParam)
 	if(code < 0)
 		return CallNextHookEx(m_Hook, code, wParam, lParam);
 
-	// top left corner is (0,0) bottom right corner is (1920, 1080) depends on the resolution
-	//std::cout << pMouseStruct->pt.x << " " << pMouseStruct->pt.y << std::endl;
+	MSLLHOOKSTRUCT* pMouseStruct;
 
-	if (app->tapObject == TapObject::kbNms)
+	switch (wParam)
 	{
-		MSLLHOOKSTRUCT* pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
+	case WM_MOUSEMOVE:
+		pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
 
-		float mx = pMouseStruct->pt.x;
-		float my = pMouseStruct->pt.y;
-
-		// TODO: find the sweet spot with the offset
-
-		GLfloat vertices[] = {
-			// Pos      // Tex
-			0.0f + (mx * .00015)  , 1.1f + (my * .00015), 0.0f, 1.0f,
-			1.0f                  , 0.0f                , 1.0f, 0.0f,
-			0.0f                  , 0.0f                , 0.0f, 0.0f,
-
-			0.0f + (mx * .00012)  , 1.0f + (my * .00012), 0.0f, 1.0f,
-			1.0f + (mx * .00012)  , 1.0f + (my * .00012), 1.0f, 1.0f,
-			1.0f                  , 0.0f                , 1.0f, 0.0f
-		}; 
-
-		// TODO: also find the sweetspot for the mouse pos
-
-		app->mousePos = glm::vec2((mx * 0.014) + (my * -0.002), (my * 0.014));
-
-		if(app->dynamicSpriteRenderer != nullptr)
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, app->dynamicSpriteRenderer->VBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-		}
-
-		// (https://stackoverflow.com/questions/34125298/modify-single-vertex-position-in-opengl) for reference
+		app->SetMousePos(pMouseStruct->pt.x, pMouseStruct->pt.y);
+		break;
+	default:
+		break;
 	}
 
 	return CallNextHookEx(m_Hook, code, wParam, lParam);
@@ -79,8 +57,6 @@ LRESULT CALLBACK LowLevelKeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 		KBDLLHOOKSTRUCT* p = (KBDLLHOOKSTRUCT*)lParam;
 		cout << char(p->vkCode) << endl;
 		*/
-
-		// TODO: if the tapobject is mouse + keyboard then only use the left had for all keybard stuff
 
 		int rnd = rand() % 2;
 
@@ -158,13 +134,37 @@ LRESULT CALLBACK LowLevelKeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(k_Hook, code, wParam, lParam);
 }
 
+bool HookMouse()
+{
+	if (m_Hook)
+		return false;
+	m_Hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandle(0), 0);
+	if (!m_Hook)
+	{
+		SystemParametersInfo(SPI_SETCURSORS, 0, NULL, 0);
+		std::cout << "ERROR::mouse not hooked" << std::endl;
+		return false;
+	}
+	std::cout << "mouse hooked" << std::endl;
+	return true;
+}
+
+void UnhookMouse()
+{
+	if (!m_Hook)
+		return;
+	std::cout << "mouse unhooked" << std::endl;
+	UnhookWindowsHookEx(m_Hook);
+	m_Hook = NULL;
+}
+
 int main(int argc, char** argv) 
 {
 	std::cout << "\nWith the program in the foreground use the L key to lock/unlock the window" << std::endl;
 	std::cout << "locking will hide title bar and shadows and make it topmost (local overlay)" << std::endl;
 	std::cout << "Exit the program with ESC or using the X button in the title bar" << std::endl;
 
-	std::cout << "\nUse keys 1 ... 5 to change the object that will be tapped" << std::endl;
+	std::cout << "\nUse keys 1 ... 6 to change the object that will be tapped" << std::endl;
 	std::cout << "if the object has a sound you can mute/unmute it with the M key\n" << std::endl;
 
 	//FreeConsole();
@@ -193,12 +193,11 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	m_Hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandle(0), 0);
-	if (!m_Hook)
-	{
-		SystemParametersInfo(SPI_SETCURSORS, 0, NULL, 0);
-		return 1;
-	}
+	app->HookCallback = &HookMouse;
+	app->UnhookCallback = &UnhookMouse;
+
+	/*if (!HookMouse())
+		return 1;*/
 
 	app->Init();
 	app->LoadResources();
@@ -208,6 +207,10 @@ int main(int argc, char** argv)
 
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastFrame = 0.0f;
+
+	double savedTime = 0;
+	double updateTimer = 0;
+	const double updateInterval = 1.0 / 30.0;
 
 	while (!glfwWindowShouldClose(app->GetGLFWWindow()))
 	{
@@ -222,24 +225,36 @@ int main(int argc, char** argv)
 		// Update Game state
 		app->Update(deltaTime);
 
-		// Render stuff
+		double currentTime = glfwGetTime();
+		double elapseTime = currentTime - savedTime;
+		savedTime = currentTime;
 
-		// if it's topmost clear for a transparent background (has to be black with 0.0f alpha value) 
-		// else use a green background (eg OBS chroma key) 
-		if (glfwGetWindowAttrib(app->GetGLFWWindow(), GLFW_FLOATING))
-			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		else
-			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+		updateTimer += elapseTime;
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		if (updateTimer >= updateInterval) 
+		{
+			// Render stuff
 
-		app->Render();
+			// if it's topmost clear for a transparent background (has to be black with 0.0f alpha value) 
+			// else use a green background (eg OBS chroma key) 
+			if (glfwGetWindowAttrib(app->GetGLFWWindow(), GLFW_FLOATING))
+				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+			else
+				glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 
-		glfwSwapBuffers(app->GetGLFWWindow());
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			app->Render();
+
+			glfwSwapBuffers(app->GetGLFWWindow());
+			
+			updateTimer = 0;
+		}
+
 	}
 
 	UnhookWindowsHookEx(k_Hook);
-	UnhookWindowsHookEx(m_Hook);
+	UnhookMouse();
 	app->Close();
 	gSoLoud.deinit();
 
