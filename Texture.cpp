@@ -3,7 +3,7 @@
 #include <iostream>
 
 Texture::Texture()
-	: Width(0), Height(0), InternalFormat(GL_RGB), ImageFormat(GL_RGB), Wrap_S(GL_REPEAT), Wrap_T(GL_REPEAT), Filter_Min(GL_LINEAR), Filter_Max(GL_LINEAR), source(nullptr)
+	: Width(0), Height(0), InternalFormat(GL_RGB), ImageFormat(GL_RGB), Wrap_S(GL_REPEAT), Wrap_T(GL_REPEAT), Filter_Min(GL_LINEAR), Filter_Max(GL_LINEAR), source("")
 {
 	glGenTextures(1, &this->ID);
 }
@@ -13,7 +13,7 @@ Texture::~Texture()
 	std::cout << "destroying texture with source: " << this->source << std::endl;
 }
 
-Texture* Texture::loadTextureFromFile(const GLchar* file, GLboolean alpha)
+Texture* Texture::loadTextureFromFile(const char* file, GLboolean alpha)
 {
 	// Create Texture object
 	Texture* texture = new Texture();
@@ -27,7 +27,7 @@ Texture* Texture::loadTextureFromFile(const GLchar* file, GLboolean alpha)
 	unsigned char* image = SOIL_load_image(file, &width, &height, 0, texture->ImageFormat == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB);
 	// Now generate texture
 	texture->Generate(width, height, image);
-	texture->source = (char*)file;
+	texture->source = std::string(file);
 	// And finally free image data
 	SOIL_free_image_data(image);
 	return texture;

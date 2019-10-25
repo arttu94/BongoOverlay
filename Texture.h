@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <GL/glew.h>
 
 class Texture
@@ -18,12 +19,12 @@ public:
 	GLuint Filter_Min; 
 	GLuint Filter_Max; 
 
-	char* source;
+	std::string source;
 
 	Texture();
 	~Texture();
 
-	static Texture* loadTextureFromFile(const GLchar* file, GLboolean alpha);
+	static Texture* loadTextureFromFile(const char* file, GLboolean alpha);
 
 	void Generate(GLuint width, GLuint height, unsigned char* data);
 

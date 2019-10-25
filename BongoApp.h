@@ -45,8 +45,6 @@ public:
 
 	bool MakeGLWindowTransparent(COLORREF colorKey);
 
-	void ChangeTapObject(const char* resource, TapObject objectType);
-
 	void Update(float dt);
 
 	void Render();
@@ -69,12 +67,21 @@ public:
 
 	static bool isMuted;
 	static TapObject tapObject;
-	std::unique_ptr<SpriteRenderer> dynamicSpriteRenderer;
 
 	bool (*HookCallback)();
 	void (*UnhookCallback)();
 
 private:
+	void ChangeTapObject(const char* resource, TapObject objectType);
+
+	void ChangeCharacter(const char suffix);
+
+	void DestroyCharacterTextures();
+
+	void LoadCharacterTextures(const char suffix);
+
+	char textureSuffix;
+
 	GLFWwindow* window;
 
 	glm::vec2 mousePos;
@@ -86,5 +93,7 @@ private:
 	std::unique_ptr<Texture> mouseTex;
 
 	std::unique_ptr<SpriteRenderer> spriteRenderer;
+	std::unique_ptr<SpriteRenderer> dynamicSpriteRenderer;
+
 };
 

@@ -19,7 +19,7 @@ bool BongoApp::isMuted = false;
 TapObject BongoApp::tapObject = (TapObject)0;
 
 BongoApp::BongoApp() : 
-	window(nullptr), shader(nullptr), lastUsedLimb((Limb)0), mousePos(glm::vec2(0.f)),
+	window(nullptr), shader(nullptr), lastUsedLimb((Limb)0), textureSuffix('b'),mousePos(glm::vec2(0.f)),
 	bodyTex(nullptr), tapObjTex(nullptr),
 	r_arm_u(nullptr), r_arm_d(nullptr), r_arm(nullptr), r_arm_mouse(nullptr),
 	l_arm_u(nullptr), l_arm_d(nullptr), l_arm(nullptr)
@@ -31,21 +31,7 @@ BongoApp::~BongoApp()
 {
 	std::cout << "destroying BongoApp" << std::endl;
 
-	this->r_arm = nullptr;
-	this->l_arm = nullptr;
-
-	if (r_arm_mouse)
-		delete r_arm_mouse;
-
-	if (r_arm_u)
-		delete r_arm_u;
-	if (r_arm_d)
-		delete r_arm_d;
-
-	if (l_arm_u)
-		delete l_arm_u;
-	if (l_arm_d)
-		delete l_arm_d;
+	DestroyCharacterTextures();
 }
 
 void BongoApp::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -159,23 +145,36 @@ bool BongoApp::Init()
 	return true;
 }
 
+void BongoApp::LoadCharacterTextures(const char suffix = 'b')
+{
+	std::string folder = "Resources/";
+	std::string format = ".png";
+
+	if (bodyTex)
+		bodyTex.reset();
+	this->bodyTex = std::make_unique<Texture>(*Texture::loadTextureFromFile(std::string(folder + "body_" + suffix + format).c_str(), GL_TRUE));
+
+	this->r_arm_d = Texture::loadTextureFromFile(std::string(folder + "r_arm_d_" + suffix + format).c_str(), GL_TRUE);
+	this->r_arm_u = Texture::loadTextureFromFile(std::string(folder + "r_arm_u_" + suffix + format).c_str(), GL_TRUE);
+	this->r_arm = r_arm_u;
+
+	this->l_arm_d = Texture::loadTextureFromFile(std::string(folder + "l_arm_d_" + suffix + format).c_str(), GL_TRUE);
+	this->l_arm_u = Texture::loadTextureFromFile(std::string(folder + "l_arm_u_" + suffix + format).c_str(), GL_TRUE);
+	this->l_arm = l_arm_u;
+
+	this->r_arm_mouse = Texture::loadTextureFromFile(std::string(folder + "r_arm_mouse_" + suffix + format).c_str(), GL_TRUE);
+
+	this->lastUsedLimb = Limb::na;
+	this->textureSuffix = suffix;
+}
+
 void BongoApp::LoadResources()
 {
 	this->shader = std::make_shared<Shader>("Resources/Shader/sprite.vert", "Resources/Shader/sprite.frag");
 
-	this->bodyTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/body.png", GL_TRUE));
+	LoadCharacterTextures('b');
 
 	this->mouseTex = std::make_unique<Texture>(*Texture::loadTextureFromFile("Resources/mouse.png", GL_TRUE));
-
-	this->r_arm_d = Texture::loadTextureFromFile("Resources/r_arm_d.png", GL_TRUE);
-	this->r_arm_u = Texture::loadTextureFromFile("Resources/r_arm_u.png", GL_TRUE);
-	this->r_arm = r_arm_u;
-
-	this->l_arm_d = Texture::loadTextureFromFile("Resources/l_arm_d.png", GL_TRUE);
-	this->l_arm_u = Texture::loadTextureFromFile("Resources/l_arm_u.png", GL_TRUE);
-	this->l_arm = l_arm_u;
-
-	this->r_arm_mouse = Texture::loadTextureFromFile("Resources/r_arm_mouse.png", GL_TRUE);
 
 	glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(300),
 		static_cast<GLfloat>(300), 0.0f, -10.0f, 10.0f);
@@ -201,7 +200,6 @@ bool BongoApp::MakeGLWindowTransparent(COLORREF colorKey)
 void BongoApp::Render()
 {
 	// TODO: find the sweet spot with the offset
-	// TODO: do the arm thing in a less expensive way
 	if (this->tapObject == TapObject::kbNms)
 	{
 		GLfloat vertices[] = {
@@ -223,7 +221,6 @@ void BongoApp::Render()
 
 		// (https://stackoverflow.com/questions/34125298/modify-single-vertex-position-in-opengl) for reference
 	}
-
 
 	//if there are any opaque sprites draw them above this comment
 	glDepthMask(GL_FALSE);
@@ -260,6 +257,35 @@ void BongoApp::ChangeTapObject(const char* resource, TapObject objectType)
 	}
 }
 
+void BongoApp::DestroyCharacterTextures()
+{
+	if (r_arm_mouse)
+		delete r_arm_mouse;
+
+	if (r_arm_u)
+		delete r_arm_u;
+	if (r_arm_d)
+		delete r_arm_d;
+
+	if (l_arm_u)
+		delete l_arm_u;
+	if (l_arm_d)
+		delete l_arm_d;
+
+	this->r_arm = nullptr;
+	this->l_arm = nullptr;
+}
+
+void BongoApp::ChangeCharacter(const char suffix)
+{
+	if (this->textureSuffix != suffix)
+	{
+		DestroyCharacterTextures();
+
+		LoadCharacterTextures(suffix);
+	}
+}
+
 void BongoApp::Update(float dt)
 {
 	int state = glfwGetKey(window, GLFW_KEY_1);
@@ -267,7 +293,7 @@ void BongoApp::Update(float dt)
 	{
 		this->tapObjTex.reset();
 		BongoApp::tapObject = TapObject::none;
-		//this->UnhookCallback();
+		this->UnhookCallback();
 	}
 	state = glfwGetKey(window, GLFW_KEY_2);
 	if (state == GLFW_PRESS)
@@ -299,7 +325,17 @@ void BongoApp::Update(float dt)
 		ChangeTapObject("Resources/kbnpad.png", TapObject::kbNms);
 		this->HookCallback();
 	}
-	// TODO: change to mouse + keyboard 
+
+	state = glfwGetKey(window, GLFW_KEY_F1);
+	if (state == GLFW_PRESS)
+	{
+		ChangeCharacter('b');
+	}
+	state = glfwGetKey(window, GLFW_KEY_F2);
+	if (state == GLFW_PRESS)
+	{
+		ChangeCharacter('m');
+	}
 }
 
 void BongoApp::Close()

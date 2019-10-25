@@ -167,6 +167,9 @@ int main(int argc, char** argv)
 	std::cout << "\nUse keys 1 ... 6 to change the object that will be tapped" << std::endl;
 	std::cout << "if the object has a sound you can mute/unmute it with the M key\n" << std::endl;
 
+	std::cout << "Use keys f1 and f2 to switch characters" << std::endl;
+
+
 	//FreeConsole();
 
 	app = std::make_unique<BongoApp>();
